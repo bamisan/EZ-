@@ -131,16 +131,16 @@ const UserModal = ({
           left: "50%",
           transform: "translateX(-50%)",
           width: "30vw",
-          maxHeight: "65vh",
+          maxHeight: "100%",
           display: "flex",
           flexDirection: "column",
         },
       }}
     >
       <div>
-        <h2>
+        {/* <h2>
           {Object.keys(userDataToUpdate).length > 0 ? "EDIT USER" : "ADD USER"}
-        </h2>
+        </h2> */}
         <TextField
           label="First Name"
           size="small"
