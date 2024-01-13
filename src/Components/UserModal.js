@@ -1,24 +1,28 @@
 import {
- Button,
- FormControlLabel,
- InputAdornment,
- Radio,
- RadioGroup,
- TextField,
+  Button,
+  FormControlLabel,
+  InputAdornment,
+  Radio,
+  RadioGroup,
+  TextField,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import Modal from "react-modal";
 
 Modal.setAppElement("#root");
 
-const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
+const UserModal = ({
+  isOpen,
+  onRequestClose,
+  openAlert,
+  userDataToUpdate,
+}) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [address, setAddress] = useState("");
   const [maritalStatus, setMaritalStatus] = useState("Single");
-
 
   // errors
   const [Errors, setErrors] = useState({
@@ -32,7 +36,7 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
     setMaritalStatus(event.target.value);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Reset errors
     setErrors({
       firstName: "",
@@ -48,17 +52,14 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
       setErrors((prevErrors) => ({ ...prevErrors, firstName: "Required" }));
       hasErrors = true;
     }
-
     if (!lastName) {
       setErrors((prevErrors) => ({ ...prevErrors, lastName: "Required" }));
       hasErrors = true;
     }
-
     if (!dateOfBirth) {
       setErrors((prevErrors) => ({ ...prevErrors, dateOfBirth: "Required" }));
       hasErrors = true;
     }
-
     if (!address) {
       setErrors((prevErrors) => ({ ...prevErrors, address: "Required" }));
       hasErrors = true;
@@ -68,11 +69,56 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
     if (hasErrors) {
       return;
     }
-    
-    // Your save logic here
-    onRequestClose();
-    openAlert("User saved successfully"); 
+
+    try {
+      const endpoint = userDataToUpdate
+        ? `YOUR_API_ENDPOINT/${userDataToUpdate.id}`
+        : "YOUR_API_ENDPOINT";
+      const method = userDataToUpdate ? "PUT" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          dateOfBirth,
+          address,
+          maritalStatus,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("API error:", response.statusText);
+        return;
+      }
+
+      onRequestClose();
+      openAlert(
+        userDataToUpdate
+          ? "User updated successfully"
+          : "User saved successfully"
+      );
+    } catch (error) {
+      console.error("Error during API call:", error);
+    }
   };
+
+  useEffect(() => {
+    setFirstName(userDataToUpdate?.firstName || "");
+    setLastName(userDataToUpdate?.lastName || "");
+    setDateOfBirth(userDataToUpdate?.dateOfBirth || "");
+    setAddress(userDataToUpdate?.address || "");
+    setMaritalStatus(userDataToUpdate?.maritalStatus || "Single");
+    setErrors({
+      firstName: "",
+      lastName: "",
+      dateOfBirth: "",
+      address: "",
+    });
+  }, [userDataToUpdate]);
 
   return (
     <Modal
@@ -84,14 +130,17 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           top: "5%",
           left: "50%",
           transform: "translateX(-50%)",
-          width: "25%",
-          maxHeight: "80%",
+          width: "30vw",
+          maxHeight: "65vh",
           display: "flex",
           flexDirection: "column",
         },
       }}
     >
       <div>
+        <h2>
+          {Object.keys(userDataToUpdate).length > 0 ? "EDIT USER" : "ADD USER"}
+        </h2>
         <TextField
           label="First Name"
           size="small"
@@ -99,7 +148,10 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           margin="normal"
           fullWidth
           value={firstName}
-          onChange={ (e) => { setFirstName(e.target.value); setErrors((prevErrors) => ({ ...prevErrors, firstName: "" })) }}
+          onChange={(e) => {
+            setFirstName(e.target.value);
+            setErrors((prevErrors) => ({ ...prevErrors, firstName: "" }));
+          }}
           error={!!Errors.firstName}
           helperText={Errors.firstName}
           InputProps={{
@@ -113,7 +165,10 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           margin="normal"
           fullWidth
           value={lastName}
-          onChange={ (e) => { setLastName(e.target.value); setErrors((prevErrors) => ({ ...prevErrors, lastName: "" })) }}
+          onChange={(e) => {
+            setLastName(e.target.value);
+            setErrors((prevErrors) => ({ ...prevErrors, lastName: "" }));
+          }}
           error={!!Errors.lastName}
           helperText={Errors.lastName}
           InputProps={{
@@ -128,7 +183,10 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           margin="normal"
           fullWidth
           value={dateOfBirth}
-          onChange={(e) => { setDateOfBirth(e.target.value); setErrors((prevErrors) => ({ ...prevErrors, dateOfBirth: "" })) }}
+          onChange={(e) => {
+            setDateOfBirth(e.target.value);
+            setErrors((prevErrors) => ({ ...prevErrors, dateOfBirth: "" }));
+          }}
           error={!!Errors.dateOfBirth}
           helperText={Errors.dateOfBirth}
           InputProps={{
@@ -142,7 +200,10 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           margin="normal"
           fullWidth
           value={address}
-          onChange={(e) => { setAddress(e.target.value); setErrors((prevErrors) => ({ ...prevErrors, address: "" })) }}
+          onChange={(e) => {
+            setAddress(e.target.value);
+            setErrors((prevErrors) => ({ ...prevErrors, address: "" }));
+          }}
           error={!!Errors.address}
           helperText={Errors.address}
           InputProps={{
@@ -150,7 +211,6 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
           }}
         />
         <RadioGroup
-          column
           aria-label="marital-status"
           name="marital-status"
           value={maritalStatus}
@@ -182,4 +242,4 @@ const AddUserModal = ({ isOpen, onRequestClose, openAlert }) => {
   );
 };
 
-export default AddUserModal;
+export default UserModal;

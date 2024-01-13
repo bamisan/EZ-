@@ -17,26 +17,46 @@ import {
 import React, { useState } from "react";
 
 import AddIcon from "@mui/icons-material/People";
-import AddUserModal from "./AddUserModal";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
+import UserModal from "./UserModal";
 
 const UserListTable = ({ users }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [userDataToUpdate, setUserDataToUpdate] = useState({});
+
 
   const headerCellStyle = { fontWeight: "bold" };
   const cardStyle = { width: "80%", margin: "auto", marginTop: "15vh" };
 
   const handleAddClick = () => {
-    setIsAddModalOpen(true);
+    setUserDataToUpdate({});
+    setIsModalOpen(true);
   };
 
-  const handleCloseAddModal = () => {
-    setIsAddModalOpen(false);
+  const handleUpdateClick = async () => {
+    try {
+      // const response = await fetch(`/api/users/1`);
+      setIsModalOpen(true);
+      setUserDataToUpdate({
+        firstName:"bami",
+        lastName: "bami",
+        dateOfBirth: "2021-01-12",
+        address: "test",
+        maritalStatus:"Married"
+      });
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      openAlert("Error fetching user data");
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
 
   const openAlert = (message) => {
@@ -122,7 +142,7 @@ const UserListTable = ({ users }) => {
                   <TableCell>{user.address}</TableCell>
                   <TableCell>{user.maritalStatus}</TableCell>
                   <TableCell>
-                    <IconButton color="primary" aria-label="update">
+                    <IconButton color="primary" aria-label="update" onClick={handleUpdateClick}>
                       <EditIcon />
                     </IconButton>
 
@@ -135,10 +155,11 @@ const UserListTable = ({ users }) => {
             </TableBody>
           </Table>
         </TableContainer>
-        <AddUserModal
-          isOpen={isAddModalOpen}
-          onRequestClose={handleCloseAddModal}
+        <UserModal
+          isOpen={isModalOpen}
+          onRequestClose={handleCloseModal}
           openAlert={openAlert}
+          userDataToUpdate={userDataToUpdate}
         />
       </CardContent>
     </Card>
