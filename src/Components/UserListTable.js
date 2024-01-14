@@ -15,22 +15,27 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from 'react-redux';
+import {
+  selectAllUsers,
+  setAllUsers,
+} from "../store/userSlice";
+import { useDispatch, useSelector } from "react-redux";
+
 import AddIcon from "@mui/icons-material/People";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import UserModal from "./UserModal";
-import { setAllUsers, setSearchTerm, selectAllUsers, selectSearchTerm } from '../store/userSlice';
 
 const UserListTable = ({ users }) => {
   const dispatch = useDispatch();
   const allUserData = useSelector(selectAllUsers);
-  const searchTerm = useSelector(selectSearchTerm);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [userDataToUpdate, setUserDataToUpdate] = useState({});
+  const [searchTerm, setSearchTerm] = useState("");
+
 
   const headerCellStyle = { fontWeight: "bold" };
   const cardStyle = { width: "80%", margin: "auto", marginTop: "15vh" };
@@ -43,15 +48,15 @@ const UserListTable = ({ users }) => {
   // Get all users
   const getAllUsers = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/users?firstName=${searchTerm}`);
+      const response = await fetch(`http://localhost:3001/api/users`);
       if (!response.ok) {
-        throw new Error('Failed to fetch user data');
+        throw new Error("Failed to fetch user data");
       }
       const data = await response.json();
       dispatch(setAllUsers(data));
     } catch (error) {
-      console.error('Error fetching user data:', error.message);
-      openAlert('Error fetching user data');
+      console.error("Error fetching user data:", error.message);
+      openAlert("Error fetching user data");
     }
   };
 
@@ -71,26 +76,30 @@ const UserListTable = ({ users }) => {
   };
 
   // Delete Users
-  const handleDeleteClick = async (userId) =>{
-    try{
-      const response = await fetch(`http://localhost:3001/api/users/${userId}`, {
-      method: 'DELETE',
-    });
+  const handleDeleteClick = async (userId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/users/${userId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-    if (!response.ok) {
-      console.error("API error:", response.statusText);
-      return;
+      if (!response.ok) {
+        console.error("API error:", response.statusText);
+        return;
+      }
+      getAllUsers();
+      openAlert("User deleted successfully");
+    } catch (error) {
+      console.error("Error during API call:", error);
     }
-    getAllUsers();
-    openAlert("User deleted successfully");
-  } catch (error) {
-    console.error("Error during API call:", error);
-  }
-};
+  };
 
-const handleSearchTermChange = (value) => {
-  dispatch(setSearchTerm(value)); 
-};
+  // search 
+  const handleSearchTermChange = (value) => {
+    setSearchTerm(value);
+  }
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -103,7 +112,7 @@ const handleSearchTermChange = (value) => {
 
   useEffect(() => {
     getAllUsers();
-  }, [searchTerm]);
+  }, []);
 
   return (
     <Card style={cardStyle}>
@@ -120,7 +129,7 @@ const handleSearchTermChange = (value) => {
           ContentProps={{
             style: {
               justifyContent: "center",
-              opacity: "0.7"
+              opacity: "0.7",
             },
           }}
         />
@@ -175,19 +184,27 @@ const handleSearchTermChange = (value) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {allUserData.map((user) => (
+              {allUserData.filter(user => user.firstName.toLowerCase().includes(searchTerm.toLowerCase())).map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.firstName}</TableCell>
                   <TableCell>{user.lastName}</TableCell>
-                  <TableCell>{user.dateOfBirth}</TableCell>
+                  <TableCell>{new Date(user.dateOfBirth).toLocaleDateString()}</TableCell>
                   <TableCell>{user.address}</TableCell>
                   <TableCell>{user.maritalStatus}</TableCell>
                   <TableCell>
-                    <IconButton color="primary" aria-label="update" onClick={() => handleUpdateClick(user.id)}>
+                    <IconButton
+                      color="primary"
+                      aria-label="update"
+                      onClick={() => handleUpdateClick(user.id)}
+                    >
                       <EditIcon />
                     </IconButton>
 
-                    <IconButton color="secondary" aria-label="delete" onClick={() => handleDeleteClick(user.id)}>
+                    <IconButton
+                      color="secondary"
+                      aria-label="delete"
+                      onClick={() => handleDeleteClick(user.id)}
+                    >
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
