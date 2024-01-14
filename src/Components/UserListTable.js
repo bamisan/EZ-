@@ -14,7 +14,7 @@ import {
   TableRow,
   TextField,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import AddIcon from "@mui/icons-material/People";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -28,7 +28,7 @@ const UserListTable = ({ users }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [userDataToUpdate, setUserDataToUpdate] = useState({});
-
+  const [allUserData, setAllUserData] = useState([]);
 
   const headerCellStyle = { fontWeight: "bold" };
   const cardStyle = { width: "80%", margin: "auto", marginTop: "15vh" };
@@ -36,6 +36,21 @@ const UserListTable = ({ users }) => {
   const handleAddClick = () => {
     setUserDataToUpdate({});
     setIsModalOpen(true);
+  };
+
+  const getAllUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data');
+      }
+      const data = await response.json();
+      console.log(data)
+      setAllUserData(data);
+    } catch (error) {
+      console.error('Error fetching user data:', error.message);
+      openAlert('Error fetching user data');
+    }
   };
 
   const handleUpdateClick = async () => {
@@ -63,6 +78,10 @@ const UserListTable = ({ users }) => {
     setIsAlertOpen(true);
     setAlertMessage(message);
   };
+
+  useEffect(() => {
+    getAllUsers();
+  }, [ getAllUsers]);
 
   return (
     <Card style={cardStyle}>
@@ -134,11 +153,11 @@ const UserListTable = ({ users }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((user) => (
+              {allUserData.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>{user.firstName}</TableCell>
                   <TableCell>{user.lastName}</TableCell>
-                  <TableCell>{user.dob}</TableCell>
+                  <TableCell>{user.dateOfBirth}</TableCell>
                   <TableCell>{user.address}</TableCell>
                   <TableCell>{user.maritalStatus}</TableCell>
                   <TableCell>
