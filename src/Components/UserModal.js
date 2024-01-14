@@ -12,12 +12,7 @@ import Modal from "react-modal";
 
 Modal.setAppElement("#root");
 
-const UserModal = ({
-  isOpen,
-  onRequestClose,
-  openAlert,
-  userDataToUpdate,
-}) => {
+const UserModal = ({ isOpen, onRequestClose, openAlert, userDataToUpdate,getAllUsers }) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -71,10 +66,12 @@ const UserModal = ({
     }
 
     try {
-      const endpoint = userDataToUpdate
-        ? `YOUR_API_ENDPOINT/${userDataToUpdate.id}`
-        : "YOUR_API_ENDPOINT";
-      const method = userDataToUpdate ? "PUT" : "POST";
+      const endpoint = userDataToUpdate.id
+        ? `http://localhost:3001/api/users/${userDataToUpdate.id}`
+        : "http://localhost:3001/api/users";
+      console.log("Endpoint:", endpoint);
+      const method = userDataToUpdate.id ? "PUT" : "POST";
+      console.log("Method:", method);
 
       const response = await fetch(endpoint, {
         method,
@@ -97,10 +94,12 @@ const UserModal = ({
 
       onRequestClose();
       openAlert(
-        userDataToUpdate
+        userDataToUpdate.id
           ? "User updated successfully"
           : "User saved successfully"
       );
+      // Call getAllUsers to update the user data
+      getAllUsers();
     } catch (error) {
       console.error("Error during API call:", error);
     }
@@ -109,7 +108,12 @@ const UserModal = ({
   useEffect(() => {
     setFirstName(userDataToUpdate?.firstName || "");
     setLastName(userDataToUpdate?.lastName || "");
-    setDateOfBirth(userDataToUpdate?.dateOfBirth || "");
+    // Convert date to "YYYY-MM-DD" format
+    const formattedDateOfBirth = userDataToUpdate?.dateOfBirth
+      ? new Date(userDataToUpdate?.dateOfBirth).toISOString().split("T")[0]
+      : "";
+
+    setDateOfBirth(formattedDateOfBirth);
     setAddress(userDataToUpdate?.address || "");
     setMaritalStatus(userDataToUpdate?.maritalStatus || "Single");
     setErrors({

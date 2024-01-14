@@ -15,20 +15,22 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-
+import { useDispatch, useSelector } from 'react-redux';
 import AddIcon from "@mui/icons-material/People";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import UserModal from "./UserModal";
+import { setAllUsers, setSearchTerm, selectAllUsers, selectSearchTerm } from '../store/userSlice';
 
 const UserListTable = ({ users }) => {
-  const [searchTerm, setSearchTerm] = useState("");
+  const dispatch = useDispatch();
+  const allUserData = useSelector(selectAllUsers);
+  const searchTerm = useSelector(selectSearchTerm);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [userDataToUpdate, setUserDataToUpdate] = useState({});
-  const [allUserData, setAllUserData] = useState([]);
 
   const headerCellStyle = { fontWeight: "bold" };
   const cardStyle = { width: "80%", margin: "auto", marginTop: "15vh" };
@@ -38,37 +40,57 @@ const UserListTable = ({ users }) => {
     setIsModalOpen(true);
   };
 
+  // Get all users
   const getAllUsers = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/users');
+      const response = await fetch(`http://localhost:3001/api/users?firstName=${searchTerm}`);
       if (!response.ok) {
         throw new Error('Failed to fetch user data');
       }
       const data = await response.json();
-      console.log(data)
-      setAllUserData(data);
+      dispatch(setAllUsers(data));
     } catch (error) {
       console.error('Error fetching user data:', error.message);
       openAlert('Error fetching user data');
     }
   };
 
-  const handleUpdateClick = async () => {
+  // Get user data by user Id
+  const handleUpdateClick = async (userId) => {
     try {
-      // const response = await fetch(`/api/users/1`);
+      const response = await fetch(`http://localhost:3001/api/users/${userId}`);
+
+      const data = await response.json();
+      // console.log(data,444)
       setIsModalOpen(true);
-      setUserDataToUpdate({
-        firstName:"bami",
-        lastName: "bami",
-        dateOfBirth: "2021-01-12",
-        address: "test",
-        maritalStatus:"Married"
-      });
+      setUserDataToUpdate(data);
     } catch (error) {
-      console.error("Error fetching user data:", error);
+      console.error("Error fetching user data:", error.message);
       openAlert("Error fetching user data");
     }
   };
+
+  // Delete Users
+  const handleDeleteClick = async (userId) =>{
+    try{
+      const response = await fetch(`http://localhost:3001/api/users/${userId}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      console.error("API error:", response.statusText);
+      return;
+    }
+    getAllUsers();
+    openAlert("User deleted successfully");
+  } catch (error) {
+    console.error("Error during API call:", error);
+  }
+};
+
+const handleSearchTermChange = (value) => {
+  dispatch(setSearchTerm(value)); 
+};
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -81,7 +103,7 @@ const UserListTable = ({ users }) => {
 
   useEffect(() => {
     getAllUsers();
-  }, [ getAllUsers]);
+  }, [searchTerm]);
 
   return (
     <Card style={cardStyle}>
@@ -116,7 +138,7 @@ const UserListTable = ({ users }) => {
               variant="outlined"
               size="small"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchTermChange(e.target.value)}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -161,11 +183,11 @@ const UserListTable = ({ users }) => {
                   <TableCell>{user.address}</TableCell>
                   <TableCell>{user.maritalStatus}</TableCell>
                   <TableCell>
-                    <IconButton color="primary" aria-label="update" onClick={handleUpdateClick}>
+                    <IconButton color="primary" aria-label="update" onClick={() => handleUpdateClick(user.id)}>
                       <EditIcon />
                     </IconButton>
 
-                    <IconButton color="secondary" aria-label="delete">
+                    <IconButton color="secondary" aria-label="delete" onClick={() => handleDeleteClick(user.id)}>
                       <DeleteIcon />
                     </IconButton>
                   </TableCell>
@@ -179,6 +201,7 @@ const UserListTable = ({ users }) => {
           onRequestClose={handleCloseModal}
           openAlert={openAlert}
           userDataToUpdate={userDataToUpdate}
+          getAllUsers={getAllUsers}
         />
       </CardContent>
     </Card>
