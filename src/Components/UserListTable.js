@@ -156,7 +156,7 @@ const UserListTable = ({ users }) => {
         >
           <div>
             <TextField
-              label="Search"
+              label="Search By FName"
               variant="outlined"
               size="small"
               value={searchTerm}
