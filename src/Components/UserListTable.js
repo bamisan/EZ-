@@ -2,6 +2,10 @@ import {
   Button,
   Card,
   CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   IconButton,
   InputAdornment,
   Paper,
@@ -15,10 +19,7 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import {
-  selectAllUsers,
-  setAllUsers,
-} from "../store/userSlice";
+import { selectAllUsers, setAllUsers } from "../store/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 
 import AddIcon from "@mui/icons-material/People";
@@ -33,9 +34,10 @@ const UserListTable = ({ users }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
   const [userDataToUpdate, setUserDataToUpdate] = useState({});
+  const [userIdToDelete, setUserIdToDelete] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
-
 
   const headerCellStyle = { fontWeight: "bold" };
   const cardStyle = { width: "80%", margin: "auto", marginTop: "15vh" };
@@ -77,9 +79,14 @@ const UserListTable = ({ users }) => {
 
   // Delete Users
   const handleDeleteClick = async (userId) => {
+    setUserIdToDelete(userId);
+    setOpenDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${userId}`,
+        `http://localhost:3001/api/users/${userIdToDelete}`,
         {
           method: "DELETE",
         }
@@ -89,17 +96,23 @@ const UserListTable = ({ users }) => {
         console.error("API error:", response.statusText);
         return;
       }
+
       getAllUsers();
       openAlert("User deleted successfully");
+      setOpenDialog(false); // Close the dialog after successful deletion
     } catch (error) {
       console.error("Error during API call:", error);
     }
   };
 
-  // search 
+  const handleCancelDelete = () => {
+    setOpenDialog(false);
+  };
+
+  // search
   const handleSearchTermChange = (value) => {
     setSearchTerm(value);
-  }
+  };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -184,32 +197,40 @@ const UserListTable = ({ users }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {allUserData.filter(user => user.firstName.toLowerCase().includes(searchTerm.toLowerCase())).map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>{user.firstName}</TableCell>
-                  <TableCell>{user.lastName}</TableCell>
-                  <TableCell>{new Date(user.dateOfBirth).toLocaleDateString()}</TableCell>
-                  <TableCell>{user.address}</TableCell>
-                  <TableCell>{user.maritalStatus}</TableCell>
-                  <TableCell>
-                    <IconButton
-                      color="primary"
-                      aria-label="update"
-                      onClick={() => handleUpdateClick(user.id)}
-                    >
-                      <EditIcon />
-                    </IconButton>
+              {allUserData
+                .filter((user) =>
+                  user.firstName
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                )
+                .map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.firstName}</TableCell>
+                    <TableCell>{user.lastName}</TableCell>
+                    <TableCell>
+                      {new Date(user.dateOfBirth).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{user.address}</TableCell>
+                    <TableCell>{user.maritalStatus}</TableCell>
+                    <TableCell>
+                      <IconButton
+                        color="primary"
+                        aria-label="update"
+                        onClick={() => handleUpdateClick(user.id)}
+                      >
+                        <EditIcon />
+                      </IconButton>
 
-                    <IconButton
-                      color="secondary"
-                      aria-label="delete"
-                      onClick={() => handleDeleteClick(user.id)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
+                      <IconButton
+                        color="secondary"
+                        aria-label="delete"
+                        onClick={() => handleDeleteClick(user.id)}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -221,6 +242,28 @@ const UserListTable = ({ users }) => {
           getAllUsers={getAllUsers}
         />
       </CardContent>
+
+      <Dialog open={openDialog} onClose={handleCancelDelete}>
+        <DialogContent style={{ textAlign: "center" }}>
+          ARE YOU SURE WANT TO DELETE THIS USER?
+        </DialogContent>
+        <DialogActions style={{ justifyContent: "center" }}>
+          <Button
+            onClick={handleCancelDelete}
+            variant="outlined"
+            color="primary"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="outlined"
+            color="error"
+          >
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 };
