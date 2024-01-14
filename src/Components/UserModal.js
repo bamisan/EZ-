@@ -5,6 +5,7 @@ import {
   Radio,
   RadioGroup,
   TextField,
+  Typography,
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 
@@ -142,9 +143,9 @@ const UserModal = ({ isOpen, onRequestClose, openAlert, userDataToUpdate,getAllU
       }}
     >
       <div>
-        {/* <h2>
+        <Typography style={{fontWeight:'bold'}}>
           {Object.keys(userDataToUpdate).length > 0 ? "EDIT USER" : "ADD USER"}
-        </h2> */}
+        </Typography>
         <TextField
           label="First Name"
           size="small"
